@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel of Names</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+        }
+
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .nav-buttons {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-btn.primary {
+            background: #4285f4;
+        }
+
+        .nav-btn.primary:hover {
+            background: #3367d6;
+        }
+
+        .main-container {
+            display: flex;
+            width: 100%;
+            margin-top: 60px;
+            height: calc(100vh - 60px);
+        }
+
+        .wheel-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #000;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 500px;
+            height: 500px;
+        }
+
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            border: 4px solid #333;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .pointer {
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 30px solid transparent;
+            border-bottom: 30px solid transparent;
+            border-left: 50px solid #4285f4;
+            z-index: 5;
+            filter: drop-shadow(0 0 10px rgba(66, 133, 244, 0.5));
+        }
+
+        .spin-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            pointer-events: none;
+            z-index: 11;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .spin-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 12;
+            background: transparent;
+            border: none;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #1a1a1a;
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid #333;
+        }
+
+        .entries-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .entries-title {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .results-count {
+            background: #333;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .entry-input-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .entry-input {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .entry-input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .add-entry-btn {
+            width: 100%;
+            padding: 10px;
+            background: #4285f4;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .add-entry-btn:hover {
+            background: #3367d6;
+        }
+
+        .entries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .entry-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            gap: 10px;
+        }
+
+        .entry-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .entry-name {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .entry-remove {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 5px;
+        }
+
+        .entry-remove:hover {
+            color: #ff4444;
+        }
+
+        .winner-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .winner-content {
+            background: #2a2a2a;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .winner-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #4285f4;
+        }
+
+        .winner-name {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .winner-close {
+            padding: 10px 30px;
+            background: #4285f4;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo">
+        <div class="logo-icon">W</div>
+        <span>wheelofnames.com</span>
+    </div>
+    <div class="nav-buttons">
+        <button class="nav-btn">🎨 Customize</button>
+        <button class="nav-btn">🆕 New</button>
+        <button class="nav-btn">📂 Open</button>
+        <button class="nav-btn">💾 Save</button>
+        <button class="nav-btn">🔗 Share</button>
+        <button class="nav-btn">🖼️ Gallery</button>
+        <button class="nav-btn primary">🇬🇧 English</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="wheel-container">
+        <div class="wheel-wrapper">
+            <canvas id="wheelCanvas"></canvas>
+            <div class="center-dot"></div>
+            <div class="spin-text">Click to<br>spin</div>
+            <button class="spin-button" onclick="spinWheel()"></button>
+            <div class="pointer"></div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="entries-header">
+            <span class="entries-title">Entries</span>
+            <span class="results-count">Results: <span id="resultsCount">0</span></span>
+        </div>
+
+        <div class="entry-input-wrapper">
+            <input type="text" class="entry-input" id="entryInput" placeholder="Type name and press Enter">
+            <button class="add-entry-btn" onclick="addEntry()">Add Entry</button>
+        </div>
+
+        <div class="entries-list" id="entriesList"></div>
+    </div>
+</div>
+
+<div class="winner-modal" id="winnerModal">
+    <div class="winner-content">
+        <div class="winner-title">🎉 Winner!</div>
+        <div class="winner-name" id="winnerName"></div>
+        <button class="winner-close" onclick="closeWinner()">OK</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    const entriesList = document.getElementById('entriesList');
+    const entryInput = document.getElementById('entryInput');
+    const resultsCount = document.getElementById('resultsCount');
+
+    canvas.width = 500;
+    canvas.height = 500;
+
+    let entries = ['marek', 'matyáš', 'matúš'];
+    let colors = [];
+    let currentRotation = 0;
+    let isSpinning = false;
+    let spinVelocity = 0;
+
+    const baseColors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+        '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'
+    ];
+
+    function generateColors() {
+        colors = [];
+        for (let i = 0; i < entries.length; i++) {
+            colors.push(baseColors[i % baseColors.length]);
+        }
+    }
+
+    function drawWheel() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (entries.length === 0) {
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(250, 250, 200, 0, Math.PI * 2);
+            ctx.fill();
+            return;
+        }
+
+        const anglePerSegment = (Math.PI * 2) / entries.length;
+        const centerX = 250;
+        const centerY = 250;
+        const radius = 200;
+
+        entries.forEach((entry, index) => {
+            const startAngle = index * anglePerSegment + currentRotation;
+            const endAngle = (index + 1) * anglePerSegment + currentRotation;
+
+            // Draw segment
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = colors[index];
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw text
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + anglePerSegment / 2);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(entry, radius - 20, 5);
+            ctx.restore();
+        });
+    }
+
+    function spinWheel() {
+        if (isSpinning || entries.length === 0) return;
+
+        isSpinning = true;
+        document.querySelector('.spin-text').style.display = 'none';
+
+        // Check for entry with trailing space (our secret winner)
+        let riggedIndex = -1;
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i].endsWith(' ')) {
+                riggedIndex = i;
+                break;
+            }
+        }
+
+        const spins = 5 + Math.random() * 3;
+        let targetRotation;
+
+        if (riggedIndex !== -1) {
+            // Rigged spin - calculate rotation to land on the rigged entry
+            const anglePerSegment = (Math.PI * 2) / entries.length;
+            const riggedAngle = riggedIndex * anglePerSegment + anglePerSegment / 2;
+            // Pointer is on the right (0 degrees), so we need to rotate to align
+            targetRotation = spins * Math.PI * 2 - riggedAngle + Math.PI * 2;
+        } else {
+            // Random spin
+            targetRotation = spins * Math.PI * 2 + Math.random() * Math.PI * 2;
+        }
+
+        spinVelocity = 0.3;
+        let progress = 0;
+
+        function animate() {
+            if (progress < 1) {
+                progress += 0.015;
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                currentRotation += spinVelocity * (1 - easeOut);
+
+                drawWheel();
+                requestAnimationFrame(animate);
+            } else {
+                currentRotation = targetRotation;
+                drawWheel();
+                isSpinning = false;
+                document.querySelector('.spin-text').style.display = 'block';
+
+                // Determine winner
+                const normalizedRotation = currentRotation % (Math.PI * 2);
+                const anglePerSegment = (Math.PI * 2) / entries.length;
+                let winnerIndex = Math.floor((Math.PI * 2 - normalizedRotation) / anglePerSegment);
+                winnerIndex = (winnerIndex + entries.length) % entries.length;
+
+                showWinner(entries[winnerIndex].trim());
+            }
+        }
+        animate();
+    }
+
+    function showWinner(name) {
+        document.getElementById('winnerName').textContent = name;
+        document.getElementById('winnerModal').style.display = 'flex';
+        updateResultsCount();
+    }
+
+    function closeWinner() {
+        document.getElementById('winnerModal').style.display = 'none';
+    }
+
+    function addEntry() {
+        const value = entryInput.value;
+        if (value && value.length > 0) {
+            entries.push(value);
+            generateColors();
+            updateEntriesList();
+            drawWheel();
+            entryInput.value = '';
+        }
+    }
+
+    function removeEntry(index) {
+        entries.splice(index, 1);
+        generateColors();
+        updateEntriesList();
+        drawWheel();
+    }
+
+    function updateEntriesList() {
+        entriesList.innerHTML = '';
+        entries.forEach((entry, index) => {
+            const div = document.createElement('div');
+            div.className = 'entry-item';
+            div.innerHTML = `
+                    <div class="entry-color" style="background: ${colors[index]}"></div>
+                    <div class="entry-name">${entry.trim()}</div>
+                    <button class="entry-remove" onclick="removeEntry(${index})">×</button>
+                `;
+            entriesList.appendChild(div);
+        });
+    }
+
+    function updateResultsCount() {
+        const count = parseInt(resultsCount.textContent) + 1;
+        resultsCount.textContent = count;
+    }
+
+    // Keyboard support
+    entryInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addEntry();
+        }
+    });
+
+    // Keyboard shortcut for spinning
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            spinWheel();
+        }
+    });
+
+    // Initialize
+    generateColors();
+    updateEntriesList();
+    drawWheel();
+</script>
+</body>
+</html>
